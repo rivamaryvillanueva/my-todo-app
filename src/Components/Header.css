@@ -1,0 +1,19 @@
+.navContainer {
+    background: rgb(244,81,44);
+    background: linear-gradient(90deg, rgba(244,81,44,1) 0%, rgba(94,27,137,1) 100%);
+    width: 600px;
+    margin: 10px auto;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+}
+
+.appTitle {
+    color: #f8fffe;
+}
+
+.dateTime {
+    color: #f8fffe;
+}
