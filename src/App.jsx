@@ -29,7 +29,28 @@ function Todo({ todo, index, completeTodo, deleteTodo, editTodo }) {
   );
 }
 
+function CompletedTodo({ todo, index, completeTodo, deleteTodo }) {
+  const handleChange = () => {
+    completeTodo(index);
+  };
+  return (
+    <div className="todo-section" style={{margin: "0px"}} >
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <Form.Check
+          style={{ width: "450px" }}
+          type="checkbox"
+          label ={<span style={{ textDecoration: todo.completed ? "line-through" : "" }}>{todo.text}</span>}
+          checked={todo.isDone}
+          onChange={handleChange}
+        />
+        <div>
+          <Button style={{ marginTop: "0px", marginLeft: "45px" }} variant="outline-danger" onClick={() => deleteTodo(index)}>✕</Button>
+        </div>
+      </div>
 
+    </div>
+  );
+}
 
 function TodoForm({ createTodo }) {
   const [value, setValue] = useState("");
@@ -51,17 +72,63 @@ function TodoForm({ createTodo }) {
   );
 }
 
+function DeleteAllButton({ deleteAllTodos }) {
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  const handleDeleteAll = () => {
+    deleteAllTodos();
+    setShowConfirmation(false);
+  };
+
+  const handleShowConfirmation = () => {
+    setShowConfirmation(true);
+  };
+
+  const handleCloseConfirmation = () => {
+    setShowConfirmation(false);
+  };
+
+  return (
+    <>
+      <Button variant="danger" onClick={handleShowConfirmation}>
+        Clear All
+      </Button>
+      <Modal show={showConfirmation} onHide={handleCloseConfirmation}>
+        <Modal.Header closeButton>
+          <Modal.Title>Clear All Todos</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to clear all todos? This action cannot be undone.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseConfirmation}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleDeleteAll}>
+            Clear All
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+}
+
 function App() {
   const [todos, setTodos] = useState([]);
+  const [allTodos, setAllTodos] = useState([]);
   const [activeTodos, setActiveTodos] = useState([]);
   const [completedTodos, setCompletedTodos] = useState([]);
   const [selectedTodoIndex, setSelectedTodoIndex] = useState(null);
   const [selectedTodoText, setSelectedTodoText] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteAllConfirmation, setShowDeleteAllConfirmation] = useState(false);
 
   useEffect(() => {
     const storedTodos = JSON.parse(localStorage.getItem('todos'));
-    if (storedTodos) setTodos(storedTodos);
+    if (storedTodos) {
+      setTodos(storedTodos);
+      setAllTodos(storedTodos);
+    }
   }, []);
 
   useEffect(() => {
@@ -72,23 +139,31 @@ function App() {
   }, [todos]);
 
   useEffect(() => {
-    localStorage.setItem('todos', JSON.stringify(todos));
-  }, [todos]);
+    localStorage.setItem('todos', JSON.stringify(allTodos));
+  }, [allTodos]);
 
   const createTodo = (text) => {
-    const newTodos = [...todos, { text, completed: false, id: Date.now() }];
+    const newTodos = [...allTodos, { text, completed: false, id: Date.now() }];
+    setAllTodos(newTodos);
     setTodos(newTodos);
   };
 
   const completeTodo = (index) => {
-    const newTodos = [...todos];
+    const newTodos = [...allTodos];
     newTodos[index].completed = true;
+    setAllTodos(newTodos);
     setTodos(newTodos);
   };
 
   const deleteTodo = (index) => {
-    const newTodos = todos.filter((_, i) => i !== index);
+    const newTodos = allTodos.filter((_, i) => i !== index);
+    setAllTodos(newTodos);
     setTodos(newTodos);
+  };
+
+  const deleteAllTodos = () => {
+    setAllTodos([]);
+    setTodos([]);
   };
 
   const handleInputChange = (e) => {
@@ -115,8 +190,9 @@ function App() {
 
   const handleSaveChanges = () => {
     if (selectedTodoIndex !== null && selectedTodoText !== '') {
-      const newTodos = [...todos];
+      const newTodos = [...allTodos];
       newTodos[selectedTodoIndex].text = selectedTodoText;
+      setAllTodos(newTodos);
       setTodos(newTodos);
       setShowModal(false);
       setSelectedTodoText('');
@@ -151,12 +227,11 @@ function App() {
               {completedTodos.map((todo) => (
                 <Card key={todo.id}>
                   <Card.Body>
-                    <Todo
+                    <CompletedTodo
                       index={todos.indexOf(todo)}
                       todo={todo}
                       completeTodo={completeTodo}
                       deleteTodo={deleteTodo}
-                      editTodo={editTodo}
                     />
                   </Card.Body>
                 </Card>
@@ -164,8 +239,10 @@ function App() {
             </div>
           </Tab>
         </Tabs>
-      </div>
-      <Modal show={showModal} onHide={handleCloseModal}>
+        <div className="clearCompleted">
+          <DeleteAllButton deleteAllTodos={deleteAllTodos} />
+        </div>
+        <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title>Edit Todo</Modal.Title>
         </Modal.Header>
@@ -181,6 +258,7 @@ function App() {
           </Button>
         </Modal.Footer>
       </Modal>
+      </div>
     </div>
   );
 }
